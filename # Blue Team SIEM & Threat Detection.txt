@@ -1,0 +1,15 @@
+# Blue Team SIEM & Threat Detection Home Lab
+
+## Overview
+A hands-on Blue Team home lab configured on a Windows host using Oracle VM VirtualBox and Wazuh SIEM. The lab ingests endpoint logs and deep process telemetry via Sysmon, mapping live security events against the MITRE ATT&CK framework.
+
+## Architecture & Configuration
+- **SIEM Engine:** Wazuh OVA running on VirtualBox (NAT Mode with port forwarding).
+- **Endpoint Agent:** Wazuh Windows Agent deployed on host OS (`HPElitebook`).
+- **Telemetry Layer:** System Monitor (Sysmon) deployed with SwiftOnSecurity configuration (`sysmonconfig-export.xml`).
+- **Log Pipeline:** Configured `ossec.conf` to stream `Microsoft-Windows-Sysmon/Operational` event channel to Wazuh Manager.
+
+## Threat Detection & Attack Simulation
+- Executed atomic test command to simulate credential access/ingress tool transfer via PowerShell (`T1003.001`).
+- Verified real-time alerting on Wazuh Dashboard (Rule Level 12+ alert generated).
+- Confirmed alert mapping to MITRE ATT&CK tactics: **Ingress Tool Transfer**, **PowerShell**, and **File Deletion**.
