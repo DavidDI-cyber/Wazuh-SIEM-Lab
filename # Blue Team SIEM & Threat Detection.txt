@@ -1,15 +1,45 @@
-# Blue Team SIEM & Threat Detection Home Lab
+Blue Team SIEM & Threat Detection Home Lab
 
-## Overview
-A hands-on Blue Team home lab configured on a Windows host using Oracle VM VirtualBox and Wazuh SIEM. The lab ingests endpoint logs and deep process telemetry via Sysmon, mapping live security events against the MITRE ATT&CK framework.
+A hands-on Blue Team home lab built on Windows with Oracle VirtualBox and the Wazuh SIEM. Endpoint telemetry (Sysmon) is streamed to a central Wazuh manager, a simulated attack is run with Atomic Red Team, and the resulting alert is traced back to its MITRE ATT&CK technique on the dashboard.
 
-## Architecture & Configuration
-- **SIEM Engine:** Wazuh OVA running on VirtualBox (NAT Mode with port forwarding).
-- **Endpoint Agent:** Wazuh Windows Agent deployed on host OS (`HPElitebook`).
-- **Telemetry Layer:** System Monitor (Sysmon) deployed with SwiftOnSecurity configuration (`sysmonconfig-export.xml`).
-- **Log Pipeline:** Configured `ossec.conf` to stream `Microsoft-Windows-Sysmon/Operational` event channel to Wazuh Manager.
+Status: ✅ Complete — SIEM deployed, telemetry flowing, attack simulated and detected.
 
-## Threat Detection & Attack Simulation
-- Executed atomic test command to simulate credential access/ingress tool transfer via PowerShell (`T1003.001`).
-- Verified real-time alerting on Wazuh Dashboard (Rule Level 12+ alert generated).
-- Confirmed alert mapping to MITRE ATT&CK tactics: **Ingress Tool Transfer**, **PowerShell**, and **File Deletion**.
+Overview
+
+The goal of this lab was for me to build the core of a Security Operations workflow end to end and get real endpoint telemetry into a SIEM, run a known attack technique against the monitored host, and confirm the SIEM detects it and maps it to the right attack tactic.
+
+It's a single-host monitoring setup — the Wazuh manager runs as a VM, and the Wazuh agent monitors the Windows host it reports from.
+
+Architecture & configuration
+Component	Detail
+SIEM engine	Wazuh OVA running in VirtualBox (NAT mode with port forwarding)
+Endpoint agent	Wazuh Windows Agent deployed on the host (HPElitebook)
+Telemetry	Sysmon deployed with the SwiftOnSecurity config (sysmonconfig-export.xml)
+Log pipeline	ossec.conf configured to stream the Microsoft-Windows-Sysmon/Operational channel to the Wazuh manager
+
+How the data flows: Sysmon generates detailed Windows telemetry (process creation, network connections, file activity) → the Wazuh agent forwards the Sysmon event channel to the manager → Wazuh's rules evaluate each event and raise alerts, scored by severity level and tagged with MITRE ATT&CK technique IDs.
+
+Threat detection & attack simulation
+I ran an Atomic Red Team test to simulate a credential access / tooling-transfer technique via PowerShell
+Wazuh raised a real time alert at Rule Level 12+ (high severity) on the dashboard.
+I confirmed the alert mapped to MITRE ATT&CK tactics including Ingress Tool Transfer, PowerShell, and File Deletion.
+Evidence
+
+Wazuh Threat Hunting dashboard — 622 events, 1 high-severity alert, MITRE ATT&CK breakdown
+
+Wazuh dashboard — alert evolution and per-agent breakdown (HPElitebook, wazuh-server)
+
+The dashboard shows total events ingested, the high-severity (Level 12+) alert raised by the simulation, and the MITRE ATT&CK technique breakdown it was mapped to.
+
+What I learned
+How Sysmon dramatically enriches Windows logging, and why a tuned config (SwiftOnSecurity) matters versus raw Windows event logs.
+How a SIEM turns raw events into prioritised, mapped alerts — severity levels and ATT&CK tagging are what let an analyst triage quickly.
+The end-to-end blue-team loop in practice: telemetry → detection rule → alert → attribution to a known technique.
+I also had to troubleshoot and work around several issues such as the Wazuh agent not actually seeing any threat, Oracle Virtual box optimizations, etc
+Next / related work
+
+This lab monitors a single host. The natural next step — a full Active Directory environment with a domain controller and a domain joined client, to study and detect identity based attacks like Kerberoasting — is being built as a separate project: Active Directory Identity Threat Detection Lab.
+
+Lab notes
+Single host monitoring with the agent on the host OS is fine for learning the pipeline, whereas a production deployment would monitor many separate endpoints and also be more complex so as to build my knowledge on this system even more.
+Wazuh in NAT mode with port forwarding for simplicity of access.
